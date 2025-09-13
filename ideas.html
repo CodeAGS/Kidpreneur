@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ideas · Kidpreneur — CodeAGS</title>
+<style>
+:root{--bg-900:#0b0b0c;--bg-800:#0f1113;--border:rgba(255,255,255,0.05);--accent:#0a84ff;--accent2:#64d2ff;--muted:#8e8e93;--text:#efeff4;--radius:18px}
+body,html{margin:0;padding:0;height:100%;background:linear-gradient(180deg,var(--bg-900),var(--bg-800));color:var(--text);font-family:-apple-system,"SF Pro Display","SF Pro Text"}
+.menubar{position:fixed;top:0;left:0;right:0;height:48px;display:flex;justify-content:space-between;align-items:center;padding:0 20px;background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border-bottom:1.1px solid var(--border);backdrop-filter:blur(15px)}
+.left{display:flex;align-items:center;gap:13px}.logo{width:37px;height:37px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;justify-content:center;align-items:center;font-weight:700}.brand .title{font-weight:700;font-size:15px}.brand .sub{font-size:12px;color:var(--muted)}.center{color:var(--muted);font-size:14px}.right{display:flex;align-items:center;gap:13px;font-size:14px;color:var(--muted)}.right button{background:none;border:none;color:var(--muted);cursor:pointer}.right button:hover{color:var(--text)}
+.desktop{padding:70px 35px 132px;display:flex;justify-content:center;margin-top:48px}.app{width:1100px;max-width:100%;border-radius:22px;background:linear-gradient(180deg,rgba(20,20,21,.7),rgba(12,12,13,.7));border:1.1px solid var(--border);backdrop-filter:blur(22px);box-shadow:0 20px 53px rgba(2,6,23,.6);overflow:hidden}
+.titlebar{height:68px;display:flex;align-items:center;padding:0 22px;border-bottom:1.1px solid var(--border)}.traffic{display:flex;gap:9px}.t{width:14px;height:14px;border-radius:50%}.red{background:#ff5f56}.yellow{background:#ffbd2e}.green{background:#28c840}.win-title{flex:1;text-align:center;font-weight:600}
+.ideas-hero{text-align:center;padding:55px 44px}.ideas-hero h1{font-size:51px;margin:0;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}.ideas-hero p{margin-top:13px;font-size:20px;color:var(--muted)}
+.idea-form{padding:0 44px 44px;display:flex;flex-direction:column;gap:18px}.idea-form input,.idea-form textarea,.idea-form select,.idea-form button{padding:15px 18px;border-radius:var(--radius);font-size:17px;border:none;font-family:inherit}.idea-form input,.idea-form textarea,.idea-form select{background:rgba(255,255,255,.05);color:var(--text);border:1.1px solid rgba(255,255,255,.08);resize:none}.idea-form button{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;cursor:pointer;font-weight:600}.clear-button{width:50%;margin:10px auto 0;background:linear-gradient(90deg,#ff4d4d,#e60000);color:#fff}.message{text-align:center;font-weight:600;padding:11px;border-radius:var(--radius);margin-top:22px;display:none}.success{color:#38c172;background:rgba(56,193,114,.1)}.error{color:red;background:rgba(255,0,0,.1)}
+.ideas-feed{display:flex;flex-direction:column;gap:26px;padding:0 44px 44px}.card{padding:24px;border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border:1.1px solid rgba(255,255,255,.05);box-shadow:0 13px 33px rgba(2,6,23,.45)}
+</style>
+</head>
+<body>
+<div class="menubar">
+  <div class="left"><div class="logo">KP</div><div class="brand"><div class="title">CodeAGS</div><div class="sub">Kidpreneur</div></div></div>
+  <div class="center">Ideas</div>
+  <div class="right"><span id="menubar-clock">--:--:--</span></div>
+</div>
+<div class="desktop">
+  <div class="app">
+    <div class="titlebar">
+      <div class="traffic"><div class="t red"></div><div class="t yellow"></div><div class="t green"></div></div>
+      <div class="win-title">Ideas</div>
+    </div>
+    <div class="ideas-hero">
+      <h1>Share Your Ideas</h1>
+      <p>Every big startup starts with a small thought. Submit yours here.</p>
+    </div>
+    <form class="idea-form" id="ideaForm" enctype="multipart/form-data">
+      <input type="text" id="ideaTitle" placeholder="Idea title..." required>
+      <textarea id="ideaDesc" rows="4" placeholder="Describe your idea..." required></textarea>
+      <input type="text" id="userName" placeholder="Your Name" required>
+      <input type="email" id="userContact" placeholder="Your Contact Info" required>
+      <button type="submit">Submit Idea</button>
+      <button type="button" id="clearButton" class="clear-button">Clear</button>
+    </form>
+    <div class="message" id="message"></div>
+    <section class="ideas-feed" id="ideasFeed"></section>
+  </div>
+</div>
+
+<script>
+const PUBLIC_IP='106.213.87.245'; // replace with your server IP
+const form=document.getElementById('ideaForm');
+const messageEl=document.getElementById('message');
+const clearBtn=document.getElementById('clearButton');
+const feed=document.getElementById('ideasFeed');
+
+function showMessage(msg,type){
+  messageEl.textContent=msg;
+  messageEl.className='message';
+  if(msg){
+    messageEl.style.display='block';
+    messageEl.classList.add(type==='success'?'success':'error');
+  }else messageEl.style.display='none';
+}
+
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const fd=new FormData(form);
+  try{
+    const res=await fetch(`http://${PUBLIC_IP}:9090/submit`,{method:'POST',body:fd});
+    if(!res.ok)throw new Error('Failed to submit');
+    showMessage('✅ Idea submitted!','success');
+    form.reset();
+    // Show in feed
+    const title=fd.get('ideaTitle'),desc=fd.get('ideaDesc');
+    const card=document.createElement('div'); card.className='card'; card.innerHTML=`<h3>${title}</h3><p>${desc}</p>`;
+    feed.prepend(card);
+  }catch(err){console.error(err); showMessage('Submission failed.','error');}
+});
+
+clearBtn.addEventListener('click',()=>{form.reset(); showMessage('','');});
+
+// Clock
+(function tick(){const el=document.getElementById('menubar-clock');function u(){const d=new Date();el.textContent=d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0')+':'+d.getSeconds().toString().padStart(2,'0');}u();setInterval(u,1000)})();
+</script>
+</body>
+</html>
